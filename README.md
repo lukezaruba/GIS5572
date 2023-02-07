@@ -1,2 +1,2 @@
 # GIS5572
- Repo for GIS 5572: ArcGIS II (Spatial Data Science II) at the University of Minnesota
+Course Materials and Projects for GIS 5572 at the University of Minnesota.
