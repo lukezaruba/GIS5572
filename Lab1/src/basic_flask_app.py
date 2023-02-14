@@ -39,7 +39,8 @@ def getPolygon():
     # Try to Execute
     try:
         # Execute Query
-        out = cursor.execute(query)
+        cursor.execute(query)
+        out = cursor.fetchall() 
 
         # Close Connection
         connection.close()
@@ -51,13 +52,14 @@ def getPolygon():
 
     # Display Error
     except Exception as e:
-        return("Error: " + e)
+        connection.rollback()
+        return("Error: " + str(e))
 
 
 # Helper Function for Converting JSON to GeoJSON
 def jsonToGeojson(raw_json):
     # Convert to JSON
-    json_input = json.load(raw_json, "r", encoding="utf-8")
+    # json_input = json.load(raw_json, "r", encoding="utf-8")
 
     # Set GeoJSON Structure
     geojson = {
@@ -67,10 +69,10 @@ def jsonToGeojson(raw_json):
                         "type":"Feature",
                         "geometry":{
                         "type":"Polygon",
-                        "coordinates":obj["geom"]["coordinates"][0][0],
+                        "coordinates":obj[0][0]["geom"]["coordinates"][0][0],
                 },
-                        "properties":{"objectid":obj["objectid"]},
-                } for obj in json_input
+                        "properties":{"objectid":obj[0][0]["objectid"]},
+                } for obj in raw_json
         ]
     }
 
