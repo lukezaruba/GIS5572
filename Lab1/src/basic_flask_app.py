@@ -34,7 +34,7 @@ def getPolygon():
     cursor = connection.cursor()
 
     # Set Query
-    query = "SELECT JSON_AGG(lab1_polygon) FROM lab1_polygon;"
+    query = "SELECT JSON_AGG(lab1_polygon) FROM lab1_polygon;" # Oops, could have been easier with 'ST_AsGeoJSON'
 
     # Try to Execute
     try:
