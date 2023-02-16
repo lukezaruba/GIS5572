@@ -58,9 +58,6 @@ def getPolygon():
 
 # Helper Function for Converting JSON to GeoJSON
 def jsonToGeojson(raw_json):
-    # Convert to JSON
-    # json_input = json.load(raw_json, "r", encoding="utf-8")
-
     # Set GeoJSON Structure
     geojson = {
         "type":"FeatureCollection",
@@ -69,7 +66,7 @@ def jsonToGeojson(raw_json):
                         "type":"Feature",
                         "geometry":{
                         "type":"Polygon",
-                        "coordinates":obj[0][0]["geom"]["coordinates"][0][0],
+                        "coordinates":[obj[0][0]["geom"]["coordinates"][0][0]],
                 },
                         "properties":{"objectid":obj[0][0]["objectid"]},
                 } for obj in raw_json
@@ -77,7 +74,7 @@ def jsonToGeojson(raw_json):
     }
 
     # Return GeoJSON
-    return geojson
+    return str(geojson).replace("'", '"')
 
 # Run App
 if __name__ == "__main__":
