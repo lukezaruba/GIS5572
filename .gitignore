@@ -6,3 +6,6 @@
 *.shx
 *.prj
 *.cpg
+*.sbn
+*.sbx
+*.xml
