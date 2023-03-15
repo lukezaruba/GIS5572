@@ -1,0 +1,15 @@
+Evaluation Approach / Metric,Appropriate Data Types,Mathematic Definition (if applicable),ArcPy function (if applicable),How to do in python,What metrics is this approach similar / different to?,Sources
+Confusion Matrix,Binary/Multiclass,N/A,arcpy.gp.ComputeConfusionMatrix() ,sklearn.metrics.confusion_matrix(),"Similar: Sensitivity, Specificity, F1-Score",ArcPy and sklearn
+Accuracy,Binary/Multiclass,TP + TN / TP + TN + FP + FN,N/A,sklearn.metrics.accuracy_score(),"Similar: Error Rate, Balanced Accuracy",sklearn
+Precision,Binary/Multiclass,TP / TP + FP,N/A,sklearn.metrics.precision_score(),"Similar: Recall, F1-Score",sklearn
+Recall,Binary/Multiclass,TP / TP + FN,N/A,sklearn.metrics.recall_score(),"Similar: Precision, F1-Score",sklearn
+True Positives,Binary/Multiclass,N/A,N/A,numpy.ravel() on a sklearn confusion matrix,"Similar: False Positives, True Negatives",sklearn and NumPy
+False Positives,Binary/Multiclass,N/A,N/A,numpy.ravel() on a sklearn confusion matrix,"Similar: True Positives, False Negatives",sklearn and NumPy
+Receiver Operator Characteristic (ROC) Curve and Area Under the Curve,Binary,N/A,N/A,sklearn.metrics.roc_auc_score(),Similar: Precision-Recall Curve and Area Under the Curve,sklearn
+R-squared,Continuous,[(nΣxy – (Σx)(Σy)) / (√nΣx2-(Σx)2 * √nΣy2-(Σy)2)]2,N/A,sklearn.metrics.r2_score(),Similar: Adjusted R-Squared,sklearn and Statology
+Adjusted R-Squared,Continuous,1 – [(1-R2)*(n-1)/(n-k-1)],N/A,1 - [(1 - sklearn.metrics.r2_score()) * (n - 1) / (n - k - 1)]     where n is number of observations and k is number of predictor variables,Similar: R-Squared,sklearn and Statology
+Root Mean Square Error,Continuous,√Σ(yi – ŷi)2 / n,N/A,sklearn.metrics.mean_squared_error(),Similar: Mean Absolute Error,sklearn and Statology
+Mean Absolute Error,Continuous,1/n * Σ|yi – ŷi|,N/A,sklearn.metrics.mean_absolute_error(),Similar: Root Mean Square Error,sklearn and Statology
+Residual Standard Error,Continuous,√MSE,N/A,numpy.sqrt(sklearn.metrics.mean_squared_error()),"Similar: Root Mean Square Error, Mean Absolute Error",DataCamp
+Akaike’s Information Criterion (AIC),Continuous,2K – 2ln(L),N/A,"statsmodels.OLS(y, x).fit().aic",Similar: Bayesian Information Criterion (BIC),Statology
+Bayesian Information Criterion (BIC),Continuous,(RSS+log(n)dσ̂2) / n,N/A,"statsmodels.OLS(y, x).fit().bic",Similar: Akaike’s Information Criterion (BIC),Statology
