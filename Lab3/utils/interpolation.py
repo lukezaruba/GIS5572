@@ -24,14 +24,23 @@ class Interpolator:
     -------
     run_exploratory_interpolation()
         Runs the exploratory interpolation tool and generates results for best-performing model.
-    display()
+    display(display_method)
         Displays accuracy assessment from the run_exploratory_interpolation() tool.
-    create_point_accuracy_layer()
+    create_point_accuracy_layer(geodatabase)
         Calculates difference from actual to interpolated values at known points.
-    convert_results_to_hex()
+    convert_results_to_hex(geodatabase, res)
         Converts the geostats interpolation layer to H3 hexagons.
-    export_to_sde()
+    export_to_sde(sde_path, dataset)
         Exports dataset to PostgreSQL database that is connected to via SDE connection.
+        
+    Example
+    -------
+    > interpolation_pipeline = Interpolator(r"point_fc_path", r"out_dir_path", "value_of_interest")
+    > interpolation_pipeline.run_exploratory_interpolation()
+    > interpolation_pipeline.display("PRINT")
+    > interpolation_pipeline.create_point_accuracy_layer(r"output_gdb_path")
+    > interpolation_pipeline.convert_results_to_hex(r"output_gdb_path", 7)
+    > interpolation_pipeline.export_to_sde(r"sde_path", "TESSELLATION")
     """
 
     def __init__(
