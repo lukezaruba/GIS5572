@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 #
 # Interpolation Methods with ArcPy
-#
 # Luke Zaruba
 # GIS 5572: ArcGIS II - Lab 3
 # 2023-04-06
@@ -26,13 +25,13 @@ class Interpolator:
         Runs the exploratory interpolation tool and generates results for best-performing model.
     display(display_method)
         Displays accuracy assessment from the run_exploratory_interpolation() tool.
-    create_point_accuracy_layer(geodatabase)
+    create_point_accuracy_layer()
         Calculates difference from actual to interpolated values at known points.
-    convert_results_to_hex(geodatabase, res)
+    convert_results_to_hex(contours, res)
         Converts the geostats interpolation layer to H3 hexagons.
     export_to_sde(sde_path, dataset)
         Exports dataset to PostgreSQL database that is connected to via SDE connection.
-        
+
     Example
     -------
     > interpolation_pipeline = Interpolator(r"point_fc_path", r"out_dir_path", "value_of_interest")
@@ -47,6 +46,7 @@ class Interpolator:
         self,
         point_feature_class: PathLike,
         output_directory: PathLike,
+        output_geodatabase: PathLike,
         value_of_interest: str,
     ) -> None:
         """Instantiates the Interpolator class.
@@ -54,21 +54,22 @@ class Interpolator:
         Args:
             point_feature_class (PathLike): Path to an input point feature class that will be interpolated.
             output_directory (PathLike): Directory that will store the outputs.
+            output_geodatabase (PathLike): Path to the geodatabase where the output will be stored.
             value_of_interest (str): Value in the input point feature class that will be interpolated.
         """
         self.point_feature_class = point_feature_class
         self.output_directory = output_directory
+        self.output_geodatabase = output_geodatabase
         self.value_of_interest = value_of_interest
 
         # Define Other Paths
-        self.feature_name = self.point_feature_class.split(r"/")[-1]
-        self.stats_table = os.path.join(
-            self.output_directory, f"{self.feature_name}_stats.csv"
-        )
-        self.geostats_layer = os.path.join(
-            self.output_directory, f"{self.feature_name}_bestInterpolator"
-        )
-        self.interpolation_methods = ["ORDINARY_KRIGING", "EBK", "IDW"]
+        self.feature_name = os.path.split(self.point_feature_class)[1]
+        self.stats_table = f"{self.feature_name}_stats"
+        self.geostats_layer = f"{self.feature_name}_bestInterpolator"
+        self.interpolation_methods = "ORDINARY_KRIGING;UNIVERSAL_KRIGING;IDW"
+
+        # Set Workspace
+        arcpy.env.workspace = self.output_geodatabase
 
     def run_exploratory_interpolation(self) -> None:
         """Runs the exploratory interpolation tool and generates results for best-performing model."""
@@ -81,16 +82,13 @@ class Interpolator:
             self.interpolation_methods,
             "SINGLE",
             "ACCURACY",
+            "ACCURACY PERCENT #",
+            "ACCURACY 1",
+            None,
         )
 
         # Message
-        print(
-            f"""
-            Exploratory interpolation successfully ran.
-            Best result saved at: {self.geostats_layer}
-            Results table saved at: {self.stats_table}
-            """
-        )
+        print(arcpy.GetMessages())
 
     def display(self, display_method: str) -> Union[str, DataFrame]:
         """Displays accuracy assessment from the run_exploratory_interpolation() tool.
@@ -105,8 +103,14 @@ class Interpolator:
         Returns:
             Union[str, DataFrame]: Either string or DataFrame is returned.
         """
+        # Convert from GDB Table to CSV
+        arcpy.conversion.ExportTable(
+            self.stats_table,
+            os.path.join(self.output_directory, f"{self.stats_table}.csv"),
+        )
+
         # Read Table into DF
-        df = pd.read_csv(self.stats_table)
+        df = pd.read_csv(os.path.join(self.output_directory, f"{self.stats_table}.csv"))
 
         # Display based on Method
         if display_method == "PRINT":
@@ -126,34 +130,50 @@ class Interpolator:
                     "Param 'display_method' must be of type string and value of ['PRINT', 'DATAFRAME']"
                 )
 
-    def create_point_accuracy_layer(self, geodatabase: PathLike) -> None:
-        """Calculates difference from actual to interpolated values at known points.
-
-        Args:
-            geodatabase (PathLike): Path to the geodatabase where the output will be stored.
-        """
+    def create_point_accuracy_layer(self) -> None:
+        """Calculates difference from actual to interpolated values at known points."""
         # Extract Values of Geostats Layer to Points
         self.point_accuracy_path = os.path.join(
-            geodatabase, f"{self.feature_name}_point_diff"
+            self.output_geodatabase, f"{self.feature_name}_point_diff"
         )
 
         arcpy.ga.GALayerToPoints(
-            self.geostats_layer, self.point_feature_class, self.point_accuracy_path
+            self.geostats_layer,
+            self.point_feature_class,
+            None,
+            self.point_accuracy_path,
         )
 
         # Message
         print(f"Point accuracy successfully generated at: {self.point_accuracy_path}")
 
-    def convert_results_to_hex(self, geodatabase: PathLike, res=6) -> None:
+    def convert_results_to_hex(self, contours=False, res=6) -> None:
         """Converts the geostats interpolation layer to H3 hexagons.
 
         Args:
-            geodatabase (PathLike): Path to the geodatabase where the output will be stored.
+            contours(bool, optional): Determines if filled contours are needed or not.
             res (int, optional): Resolution of the H3 cells that will be used. Defaults to 6.
         """
+        # If needed, Convert to Polygons First
+        if contours:
+            self.contour_path = os.path.join(
+                self.output_geodatabase, f"{self.feature_name}_filledContours"
+            )
+
+            arcpy.ga.GALayerToContour(
+                self.geostats_layer,
+                "FILLED_CONTOUR",
+                self.contour_path,
+                "PRESENTATION",
+                "GEOMETRIC_INTERVAL",
+                20,
+                [],
+                None,
+            )
+
         # Generate Tessellated Representation of Geostats Layer
         self._empty_tessellation_path = os.path.join(
-            geodatabase, f"{self.feature_name}_h3_{res}_empty"
+            self.output_geodatabase, f"{self.feature_name}_h3_{res}_empty"
         )
 
         arcpy.management.GenerateTessellation(
@@ -163,14 +183,31 @@ class Interpolator:
             H3_Resolution=res,
         )
 
-        # Join Geostats Layer to Tessellation
+        # Summarize Point Predictions with Tessellation
         self.tessellation_path = os.path.join(
-            geodatabase, f"{self.feature_name}_h3_{res}"
+            self.output_geodatabase, f"{self.feature_name}_h3_{res}"
         )
 
-        arcpy.ga.ArealInterpolationLayerToPolygons(
-            self.geostats_layer, self._empty_tessellation_path, self.tessellation_path
-        )
+        # Summarize based on Contours or Not
+        if contours:
+            arcpy.gapro.SummarizeWithin(
+                self.contour_path,
+                self.tessellation_path,
+                "POLYGON",
+                summary_polygons=self._empty_tessellation_path,
+                sum_shape="NO_SUMMARY",
+                standard_summary_fields="Value_Max MEAN Count",
+            )
+
+        else:
+            arcpy.gapro.SummarizeWithin(
+                self.point_accuracy_path,
+                self.tessellation_path,
+                "POLYGON",
+                summary_polygons=self._empty_tessellation_path,
+                sum_shape="NO_SUMMARY",
+                standard_summary_fields="Predicted MEAN Rate",
+            )
 
         # Message
         print(
@@ -191,7 +228,7 @@ class Interpolator:
         # Determine Dataset to Export
         if dataset == "TESSELLATION":
             input_fc = self.tessellation_path
-            output_fc = os.path.join(sde_path, f"{self.feature_name}_h3_{res}")
+            output_fc = os.path.join(sde_path, f"{self.feature_name}_h3")
 
         elif dataset == "POINT_ACCURACY":
             input_fc = self.point_accuracy_path
