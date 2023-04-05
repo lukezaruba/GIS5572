@@ -52,7 +52,7 @@ class Database:
         user = os.environ.get("USER")
         password = os.environ.get("PASSWORD")
         db_name = os.environ.get("DBNAME")
-        port = os.environ.get("PORT")
+        port = os.environ.get("DBPORT")
 
         # Return Instance
         return cls(host, user, password, db_name, port)
