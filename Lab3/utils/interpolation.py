@@ -5,6 +5,7 @@
 # GIS 5572: ArcGIS II - Lab 3
 # 2023-04-06
 #
+
 import arcpy
 import os
 import pandas as pd
@@ -15,7 +16,7 @@ from pandas import DataFrame
 from os import PathLike
 
 
-class Interpolator:
+class Pipeline:
     """
     A class used to run a pipeline of interpolation and accuracy assessments automatically.
 
@@ -34,7 +35,7 @@ class Interpolator:
 
     Example
     -------
-    > interpolation_pipeline = Interpolator(r"point_fc_path", r"out_dir_path", "value_of_interest")
+    > interpolation_pipeline = Pipeline(r"point_fc_path", r"out_dir_path", "value_of_interest")
     > interpolation_pipeline.run_exploratory_interpolation()
     > interpolation_pipeline.display("PRINT")
     > interpolation_pipeline.create_point_accuracy_layer(r"output_gdb_path")
@@ -49,7 +50,7 @@ class Interpolator:
         output_geodatabase: PathLike,
         value_of_interest: str,
     ) -> None:
-        """Instantiates the Interpolator class.
+        """Instantiates the Pipeline class.
 
         Args:
             point_feature_class (PathLike): Path to an input point feature class that will be interpolated.

@@ -13,3 +13,4 @@ __pycache__
 *.sbn
 *.sbx
 *.xml
+*.todo

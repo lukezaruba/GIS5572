@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Interpolation Methods with ArcPy
+# ETL Methods for Weather Interpolation
 # Luke Zaruba
 # GIS 5572: ArcGIS II - Lab 3
 # 2023-04-06
@@ -44,12 +44,12 @@ class WeatherLoader:
     """
 
     def __init__(self, geodatabase: PathLike, month=1, year=2023):
-        """_summary_
+        """Instantiates the WeatherLoader class.
 
         Args:
-            geodatabase (PathLike): _description_
-            month (int, optional): _description_. Defaults to 1.
-            year (int, optional): _description_. Defaults to 2023.
+            geodatabase (PathLike): Path to the geodatabse that will be used to store outputs.
+            month (int, optional): Month that data will be queried for. Defaults to 1.
+            year (int, optional): Year that data will be queried for. Defaults to 2023.
         """
         self.geodatabase = geodatabase
         self.month = month
@@ -65,10 +65,10 @@ class WeatherLoader:
         )
 
     def extract(self) -> DataFrame:
-        """_summary_
+        """Extracts data from API and performs miminal cleaning to return as a DataFrame.
 
         Returns:
-            DataFrame: _description_
+            DataFrame: DataFrame containing raw data is returned.
         """
         # Get Response & Convert to DF
         response = requests.get(self.url)
@@ -94,23 +94,20 @@ class WeatherLoader:
         return self.df
 
     @staticmethod
-    def _extractToCol(df: DataFrame, field: Series) -> Series:
+    def _extractToCol(df: DataFrame, field: Series) -> None:
         """Function to extract fields from dicts that are columns in DF.
 
         Args:
-            df (DataFrame): _description_
-            field (Series): _description_
-
-        Returns:
-            Series: _description_
+            df (DataFrame): DataFrame containing raw values that need to be seperated.
+            field (Series): Name of Series/column that will be created.
         """
         df[field] = df["properties"].apply(lambda x: dict(x)[field])
 
     def transform(self) -> DataFrame:
-        """_summary_
+        """Transforms and performs QAQC on raw DataFrame to create cleaned DataFrame.
 
         Returns:
-            DataFrame: _description_
+            DataFrame: DataFrame containing cleaned data is returned.
         """
         # Fill NA Precip Values
         self.df["precip"].fillna(0, inplace=True)
@@ -136,10 +133,10 @@ class WeatherLoader:
         return self.df
 
     def aggregate(self) -> DataFrame:
-        """_summary_
+        """Aggregates daily values to monthly summary at each weather station.
 
         Returns:
-            DataFrame: _description_
+            DataFrame: DataFrame containing aggregated data is returned.
         """
         # Define Aggregate Functions
         agg_functions = {
@@ -160,7 +157,8 @@ class WeatherLoader:
         # Return DF
         return self.aggregated_df
 
-    def load(self):
+    def load(self) -> None:
+        """Loads aggregated data to feature class."""
         # Convert Weather Observations from DF to SEDF
         self.sedf = arcgis.GeoAccessor.from_xy(self.aggregated_df, "x", "y")
 
